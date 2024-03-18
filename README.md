@@ -3,6 +3,8 @@ Shows the contents of a directory in a tree structure.
 
 Usage: 
 ```tree [path]```
-```[]: optional parameters```
+
+
+```[params]: optional parameters```
 
 
