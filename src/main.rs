@@ -1,6 +1,6 @@
 //tree [path?]
 
-use std::{fs, path::PathBuf, str::FromStr};
+use std::{fs, os::windows::fs::MetadataExt, path::PathBuf, str::FromStr};
 
 use anyhow::{Context, Result};
 
@@ -44,6 +44,21 @@ fn walk_dir(path: &PathBuf) -> Result<Directory> {
                 node = match entry {
                     file_entry if entry.path().is_file() => {
                         //do file things
+                        if file_entry.file_name().to_str().unwrap().starts_with(".") {
+                            continue;
+                        }
+                        if let Ok(metadata) = file_entry.metadata() {
+                            const FILE_ATTRIBUTE_HIDDEN: u32 = 0x02;
+                            let file_attr = metadata.file_attributes();
+
+                            //FILE_ATTRIBUTE_HIDDEN is 0x02 for windows and
+                            //any number that results in a number greater than zero after bitwise-and with it is hidden
+                            if file_attr & FILE_ATTRIBUTE_HIDDEN != 0 {
+                                //file is hidden
+
+                                continue;
+                            }
+                        }
                         TreeEntry::FileNode(File {
                             name: file_entry.file_name().to_str().unwrap().to_string(),
                             metadata: file_entry.metadata().ok(),
@@ -58,6 +73,26 @@ fn walk_dir(path: &PathBuf) -> Result<Directory> {
                         })
                     }
                     dir_entry if entry.path().is_dir() => {
+                        //do file things
+                        if dir_entry.file_name().to_str().unwrap().starts_with(".") {
+                            // println!(
+                            //     "skipping dir cuz startswith '.'=> {}",
+                            //     dir_entry.file_name().to_str().unwrap()
+                            // );
+                            continue;
+                        }
+                        if let Ok(metadata) = dir_entry.metadata() {
+                            const FILE_ATTRIBUTE_HIDDEN: u32 = 0x02;
+                            let file_attr = metadata.file_attributes();
+
+                            //FILE_ATTRIBUTE_HIDDEN is 0x02 for windows and
+                            //any number that results in a number greater than zero after bitwise-and with it is hidden
+                            if file_attr & FILE_ATTRIBUTE_HIDDEN != 0 {
+                                //file is hidden
+
+                                continue;
+                            }
+                        }
                         //proceed with directory recursion
                         TreeEntry::DirNode(walk_dir(&dir_entry.path())?)
                     }
@@ -78,9 +113,9 @@ fn walk_dir(path: &PathBuf) -> Result<Directory> {
     })
 }
 
-// fn print_children(node: &TreeEntry, prefix: &str) {
-
-// }
+fn print_usage() {
+    println!("tree [path]\n[param]=> parameter 'param' is optional;path is optional");
+}
 
 fn print_tree(path: &PathBuf, tree: &Directory) {
     const PIPE: &str = "\u{2502}\u{00A0}\u{00A0}"; // │
