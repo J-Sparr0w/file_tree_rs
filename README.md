@@ -4,5 +4,10 @@ Shows the contents of a directory in a tree structure.
 
 ## This tree command shows the no. of files and directories it printed
 
-Usage: ```tree [path]```
-```[]: optional parameters```
+Usage: 
+```tree [path]```
+
+
+```[params]: optional parameters```
+
+
